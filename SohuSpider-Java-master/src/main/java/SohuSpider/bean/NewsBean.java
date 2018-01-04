@@ -1,7 +1,7 @@
 package main.java.SohuSpider.bean;
 
 public class NewsBean {
-	String url; //新闻url
+	String newsurl; //新闻url
 	
 	String category; //新闻类别
 	
@@ -13,10 +13,14 @@ public class NewsBean {
 	
 	String date; //发布时间
 	
-	String editor; //新闻作者
-	
+	String ori; //新闻来源
+
+	String newsid; //新闻id
+
+	String cmtnum; //评论数目
+
 	public String getUrl(){
-		return url;
+		return newsurl;
 	}
 	
 	public String getCategory(){
@@ -27,9 +31,7 @@ public class NewsBean {
 		return sourceFrom;
 	}
 	
-	public String getTitle(){
-		return title;
-	}
+	public String getTitle(){ return title; }
 	
 	public String getContent(){
 		return content;
@@ -39,12 +41,17 @@ public class NewsBean {
 		return date;
 	}
 	
-	public String getEditor(){
-		return editor;
+	public String getOri(){
+		return "搜狐新闻";
 	}
+
+	public String getNewsID() { return newsid; }
+
+	public String getCmtnum() { return cmtnum; }
+
 	
-	public void setUrl(String url){
-		this.url = url;
+	public void setUrl(String newsurl){
+		this.newsurl = newsurl;
 	}
 	
 	public void setCategory(String category){
@@ -66,23 +73,27 @@ public class NewsBean {
 	public void setDate(String date){
 		this.date = date;
 	}
-	
-	public void setEditor(String editor){
-		this.editor = editor;
-	}
+
+	public void setNewsID(String newsid) { this.newsid = newsid; }
+
+	public void setCmts(String cmts) {this.cmtnum = cmtnum; }
+
 	
 	@Override
 	public String toString(){
-		return "NewsBean:{ \n" +
-	           "           title:" + title + "\n" +
-	           "           url:" + url + "\n" +
-	           "           date:" + date + "\n" +
-	           "           category:" + category + "\n" +
-	           "           sourceFrom:" + sourceFrom + "\n" +
-	           "           editor:" + editor + "\n" +
-	           "           content:" + content + "\n" +
-	           "        }"
-			;	
+
+		return "{" +
+				"'newsid:'" + newsid + "," +
+				"'newsurl:'" + newsurl + "," +
+				"'author:'" + sourceFrom + "," +
+				"'title:'" + title + "," +
+				"'type:'" + category + "," +
+				"'ntime:'" + date + "," +
+				"'content:'" + content + "," +
+				"'cmtnum:'" + cmtnum + "," +
+				"'ori:'" + "搜狐新闻" + "," +
+				"'cmtlist:'" + "" +
+				"}";
 	}
 	
 	

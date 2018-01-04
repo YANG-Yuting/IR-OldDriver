@@ -4,6 +4,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class JSoupUtils {
 	
@@ -13,12 +15,21 @@ public class JSoupUtils {
 	 */
 	
 	public static Document getDocument(String url){
+		String p404;
+		String patten = "404";
+		Pattern p = Pattern.compile(patten);
+		Matcher m;
 		try{
-			
 			Document document = Jsoup.connect(url)
-					.userAgent(userAgent)
 					.timeout(3000)
 					.get();
+			p404 = document.body().select("header.ns").first().text();
+			m = p.matcher(p404);
+			if(m.find()){
+				System.out.println("404 not found");
+				return null;
+			}
+
 			if(document == null || document.toString().trim().equals("")){ // 表示Ip被拦截或其他情况
 				System.out.println("出现ip被拦截或者其他情况");
 				HttpUtils.setProxyIp(); //重新设置代理ip

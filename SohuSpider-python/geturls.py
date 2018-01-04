@@ -114,7 +114,6 @@ if __name__ == '__main__':
 	#driver, js = ChromeInitial()
 	driver, js = PhantomJSInitial()
 	aurls =''
-	# driver = webdriver.PhantomJS(executable_path=r'/Users/apple/phantomjs-2.1.1-macosx/bin/phantomjs') # phantomjs非可视化浏览器，用于提高爬取速度
 	
 	# url = 'https://m.sohu.com'
 	# content = getPage(url)
@@ -130,6 +129,7 @@ if __name__ == '__main__':
 	driver.quit()
 
 
+	url = 'https://v2.sohu.com/public-api/feed?scene=CHANNEL&sceneId=15&page=1&size=20'
 
 
 

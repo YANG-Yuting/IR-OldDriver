@@ -28,7 +28,7 @@ public class HttpUtils {
 			
 			Random random = new Random();
 			int randomInt = random.nextInt(ipList.size());
-			String ipport = ipList.get(randomInt);
+			String ipport = ipList.get(randomInt); // 随机选取一个ip
 			String proxyIp = ipport.substring(0, ipport.lastIndexOf(":"));
 			String proxyPort = ipport.substring(ipport.lastIndexOf(":") + 1, ipport.length());
 			

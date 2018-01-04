@@ -47,15 +47,15 @@ public class SpiderService implements Serializable {
 	BlockingQueue<String> urlQueue = null;
 	
 	//数据库连接
-	static Connection con = DBStatement.getCon();
+	//static Connection con = DBStatement.getCon();
 	
-	static Statement stmt = DBStatement.getInstance();
+	//static Statement stmt = DBStatement.getInstance();
 	
-	static PreparedStatement ps = null;
+	//static PreparedStatement ps = null;
 	
 	//线程池
-	static Executor executor = Executors.newFixedThreadPool(20);
-	
+	static Executor executor = Executors.newFixedThreadPool(40);
+
 	static String urlHost = "http://m.sohu.com";
 	
 	//导航页面url
@@ -64,7 +64,7 @@ public class SpiderService implements Serializable {
 	//爬取深度
 	static int DEFAULT_DEPTH = 10;
 	
-	static int DEFAULT_THREAD_NUM = 10;
+	static int DEFAULT_THREAD_NUM = 30;
 	
 	public void start() throws InterruptedException{
 		
@@ -86,11 +86,10 @@ public class SpiderService implements Serializable {
 			urlQueue = new LinkedBlockingQueue<String>();
 			
 			//获取入口Url
-			List<String> urlChannels = genEntryChannel(urlNavigation);
+			List<String> urlChannels = genEntryChannel();
 			
 			for (String url : urlChannels) {
 				urlQueue.add(url);
-				System.out.println(url);
 			}
 		}
 		
@@ -127,13 +126,12 @@ public class SpiderService implements Serializable {
 				     while (true) {
 	                        String url = getAUrl();
 	                        if (!filter.contains(url)) {
-	                            filter.add(url);
-	                            System.out.println(Thread.currentThread().getName()+"正在爬取url:" + url);
+	                            System.out.println(Thread.currentThread().getName()+" 正在爬取url: " + url);
 	                            if (url != null) {
-										crawler(url);
+									crawler(url);
 	                            }
 	                        }else {
-	                            System.out.println("此url存在，不爬了." + url);
+	                            System.out.println("1此url存在，不爬了." + url);
 	                        }
 	                    }
 					
@@ -154,13 +152,12 @@ public class SpiderService implements Serializable {
 									while (true) {
 										String url = getAUrl();
 										if (!filter.contains(url)) {
-											filter.add(url);
 											System.out.println(Thread.currentThread().getName()+"正在爬取url:" + url);
 											if (url != null) {
 												crawler(url);
 											}
 										}else {
-											System.out.println("此url存在， 不爬了." + url);
+											System.out.println("2此url存在， 不爬了." + url);
 										}
 									}
 								}
@@ -181,135 +178,95 @@ public class SpiderService implements Serializable {
 		}).start();
 		
 	}
-	
+
 	/* 从导航页解析入口新闻url */
-	public static List<String> genEntryChannel (String startUrl) {
-		
+	public static List<String> genEntryChannel () {
+
 		List<String> urlArray = new ArrayList<String>();
-		//小说类别的url不需要，其url特征是含有单词read
-		String pattern = "^/c.*";
-		
-		Document doc = getDocument(startUrl);
-		Elements Urls = doc.select("a.h3Sub");
-		for (Element url : Urls) {
-			String link = url.attr("href");
-			if (Pattern.matches(pattern, link) == true) {
-				urlArray.add(urlHost + link);
+		String genurl;
+		//int[] author = {255783, 157635, 267106, 260616, 162522};
+		int[] author = {162522, 267106, 260616, 255783, 157635};
+		for (int i=0;i<author.length;i++){
+			for(int j=210936000; j>210000000;j--){
+				genurl = "http://m.sohu.com/a/" + j + "_" + author[i];
+				urlArray.add(genurl);
 			}
 		}
-		
 		writeEntryUrls(urlArray);
 		return urlArray;
 	}
-
 	
 	/* 爬取新闻网页 */
 	public void crawler(String url) {
 		
-		Document doc = getDocument(url); //返回的Document对象一定是正确的
-		
-		String pattern = ".*/n/[0-9]+/.*";
-		//System.out.println(Pattern.matches(pattern, url));
-		if (Pattern.matches(pattern, url)){
-			
-			String title = "";
-			String category = null;
-			String sourceFrom = null;
-			String date = null;
-			String content = "";
-			String editor = null;
-			
-			NewsBean news = new NewsBean();
-			
-			news.setUrl(url);
-			
-			try{
-				/**
-				 * 新闻标题格式 题目-类别-手机搜狐
-				 * 但是有些题目中本身就含有 "-" 
-				 */
-				String[] temp = doc.title().trim().split("-");
-				category = temp[temp.length - 2].substring(0, 2);
-				for (int i = 0; i < temp.length - 2; i++){
-					title += temp[i];
-				}
-			} catch (ArrayIndexOutOfBoundsException e) {
-				//e.printStackTrace();
-				return ; 
-			}
-			
-			news.setCategory(category);
-			news.setTitle(title);
-			
-			Elements articleInfo = doc.body().select("div.article-info");
-			if ( articleInfo.isEmpty() == false) {
-				try{
-					String[] temp = articleInfo.first().text().split(" ");
-					sourceFrom = temp[0];
-					date = temp[1];
-				} catch (ArrayIndexOutOfBoundsException e) {
-					e.printStackTrace();
-					return ;
-				}
-			}
-			news.setSourceFrom(sourceFrom);
-			news.setDate(date);
-			
-			Elements paras = doc.body().select("article p");
-			if ( paras.isEmpty() == false) {
-				for (Element e : paras) {
-					content += e.text();
-					content += "\n";
-				}
-			}
-			
-			news.setContent(content);
-			
-			if (content.length() > 8000) {
-				return ;
-			}
-			
-			
-			Elements divEditor = doc.body().select("div.editor");
-			if (divEditor.isEmpty() == false) {
-				editor = divEditor.first().text();
-			}
-			news.setEditor(editor);
-			
-			//打印用户信息
-	        System.out.println("爬取成功：" + news);
-	
-	        String sql = "insert into news_info " +
-	                "(title,url,cate,date,srcFrom,content,editor) " +
-	                "values (?,?,?,?,?,?,?)";
-	        try {
-	            ps = con.prepareStatement(sql, Statement.SUCCESS_NO_INFO);
-	            ps.setString(1, news.getTitle());
-	            ps.setString(2, news.getUrl());
-	            ps.setString(3, news.getCategory());
-	            ps.setString(4, news.getDate());
-	            ps.setString(5, news.getSourceFrom());
-	            ps.setString(6, news.getContent());
-	            ps.setString(7, news.getEditor());
-	            //存储news
-	            ps.executeUpdate();
-	        }catch (Exception e){
-	            e.printStackTrace();
-	        }
+		Document doc = getDocument(url);
+		if(doc == null) {//返回的Document对象一定是正确的
+			return;
 		}
-		
-		//新闻正文url的特征  https://m.sohu.com/n/488483157/
-		Elements urlCandidates = doc.body().select("a[href~=(.*/n/[0-9]+/)|(.*/c.*)]");
-		for (Element e : urlCandidates){
-			url = urlHost + e.attr("href");
-			try {
-				urlQueue.put(url);
-			} catch (InterruptedException e1) {
-				
-				e1.printStackTrace();
+
+		String title = "";
+		String category = null;
+		String sourceFrom = null; //author
+		String date = null;
+		String content = "";
+		String newsid = null; //wjc
+
+		NewsBean news = new NewsBean();
+
+		news.setUrl(url);
+
+		//set newsid
+		String idpattern = "\\d+_\\d+";
+		Pattern r = Pattern.compile(idpattern);
+		Matcher m = r.matcher(url);
+		if(m.find()){
+			newsid = m.group(0);
+			news.setNewsID(newsid);
+		} else {
+			return;
+		}
+
+		try{
+			/**
+			 * 新闻标题格式 题目-类别-手机搜狐
+			 * 但是有些题目中本身就含有 "-"
+			 */
+			String[] temp = doc.title().trim().split("-");
+			category = temp[temp.length - 2].substring(0, 2);
+			for (int i = 0; i < temp.length - 2; i++){
+				title += temp[i];
+			}
+		} catch (ArrayIndexOutOfBoundsException e) {
+			//e.printStackTrace();
+			return ;
+		}
+
+		news.setCategory(category);
+		news.setTitle(title);
+
+		sourceFrom = doc.body().select("header.name").first().text();
+		news.setSourceFrom(sourceFrom);// author
+
+		date = doc.body().select("footer.time").first().text();
+
+		news.setDate(date);
+
+		Elements paras = doc.body().select("article p");
+		if ( paras.isEmpty() == false) {
+			for (Element e : paras) {
+				content += e.text();
+				content += "\n";
 			}
 		}
-		
+
+		news.setContent(content);
+
+		if (content.length() > 8000) {
+			return ;
+		}
+		//打印用户信息
+		System.out.println("爬取成功：" + news);
+		filter.add(url); //将该url加入filter中
 	}
 	
 	
@@ -323,7 +280,5 @@ public class SpiderService implements Serializable {
         }
         return null;
 	}
-	
-
 }
 
